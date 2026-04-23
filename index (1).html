@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="theme-color" content="#f7f5ee">
+<meta name="description" content="Gestión de gastos personal">
+<title>Mis Gastos</title>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Mis Gastos&quot;,&quot;short_name&quot;:&quot;Gastos&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%23f7f5ee&quot;,&quot;theme_color&quot;:&quot;%23f7f5ee&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23d4e8a0'/%3E%3Ctext y='.9em' font-size='72' x='14'%3E💸%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5ee;
+  --bg2: #f0ede3;
+  --surface: #ffffff;
+  --surface2: #f4f2ea;
+  --border: rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.13);
+  --text: #1a1a14;
+  --text2: #6b6b55;
+  --text3: #aaaа92;
+  --accent: #8fc43a;
+  --accent-bg: #e8f5c8;
+  --accent-text: #3d6b0a;
+  --danger: #d4674a;
+  --danger-bg: #fce8e2;
+  --danger-text: #8b2e18;
+  --warn: #c49a3a;
+  --warn-bg: #fdf2d0;
+  --warn-text: #6b4a0a;
+  --cat-colors: #8fc43a,#4ab8c4,#c47a3a,#c43a7a,#7a3ac4,#3a8fc4,#c4c43a,#3ac47a,#c43a3a,#8f3ac4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: 'Outfit', sans-serif; color: var(--text); display: flex; flex-direction: column; }
+
+#app { flex: 1; display: flex; flex-direction: column; overflow: hidden; max-width: 480px; width: 100%; margin: 0 auto; }
+#screen { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+#screen::-webkit-scrollbar { display: none; }
+
+.topbar { padding: 48px 20px 12px; background: var(--bg); position: sticky; top: 0; z-index: 10; }
+.topbar-row { display: flex; align-items: baseline; justify-content: space-between; }
+.topbar h1 { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+.topbar .sub { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+.hero { padding: 4px 20px 20px; }
+.hero-label { font-size: 11px; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.hero-amount { font-size: 52px; font-weight: 300; color: var(--text); letter-spacing: -2px; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+.hero-amount sup { font-size: 22px; letter-spacing: 0; color: var(--text2); vertical-align: super; }
+.hero-chips { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.chip { font-size: 12px; padding: 5px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+.chip-good { background: var(--accent-bg); color: var(--accent-text); }
+.chip-warn { background: var(--warn-bg); color: var(--warn-text); }
+.chip-bad  { background: var(--danger-bg); color: var(--danger-text); }
+
+.prog-wrap { margin: 0 20px 20px; }
+.prog-track { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 4px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+.prog-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+.prog-labels span { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+.sec-header { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; margin-bottom: 10px; }
+.sec-title { font-size: 11px; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+
+.cats { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 3px; }
+.cat-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: var(--surface); border-radius: 14px; border: 1px solid var(--border); transition: transform 0.1s; }
+.cat-row:active { transform: scale(0.99); }
+.cat-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.cat-emoji { font-size: 18px; line-height: 1; width: 28px; text-align: center; }
+.cat-info { flex: 1; min-width: 0; }
+.cat-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-bar { height: 3px; background: var(--surface2); border-radius: 2px; margin-top: 4px; overflow: hidden; width: 100%; }
+.cat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+.cat-right { text-align: right; flex-shrink: 0; }
+.cat-spent { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.cat-budget { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+.recents { padding: 0 20px 100px; display: flex; flex-direction: column; gap: 3px; }
+.gasto-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border-radius: 14px; border: 1px solid var(--border); }
+.gasto-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.gasto-info { flex: 1; min-width: 0; }
+.gasto-desc { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gasto-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.gasto-amount { font-size: 14px; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.gasto-del { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 2px 6px; line-height: 1; flex-shrink: 0; }
+.empty-state { padding: 40px 0; text-align: center; color: var(--text2); font-size: 13px; }
+
+.nav { display: flex; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0; cursor: pointer; background: none; border: none; color: var(--text2); transition: color 0.15s; font-family: 'Outfit', sans-serif; }
+.nav-btn.active { color: var(--accent-text); }
+.nav-btn svg { width: 20px; height: 20px; }
+.nav-btn span { font-size: 10px; letter-spacing: 0.03em; }
+
+/* ADD SCREEN */
+.add-screen { padding: 16px 20px 100px; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 11px; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 6px; }
+.field input, .field select { width: 100%; padding: 13px 14px; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; color: var(--text); font-size: 16px; font-family: 'Outfit', sans-serif; outline: none; -webkit-appearance: none; background-image: none; }
+.field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.field input::placeholder { color: var(--text2); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cat-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cat-pick-btn { display: flex; align-items: center; gap: 8px; padding: 11px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 14px; color: var(--text); font-family: 'Outfit', sans-serif; transition: all 0.15s; text-align: left; white-space: nowrap; overflow: hidden; }
+.cat-pick-btn .picon { font-size: 17px; flex-shrink: 0; }
+.cat-pick-btn .pname { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.cat-pick-btn.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.btn-primary { width: 100%; padding: 15px; background: var(--accent); color: #fff; font-size: 15px; font-weight: 600; border: none; border-radius: 14px; cursor: pointer; font-family: 'Outfit', sans-serif; margin-top: 8px; letter-spacing: 0.01em; }
+.btn-primary:active { opacity: 0.85; transform: scale(0.99); }
+
+/* BUDGET SCREEN */
+.budget-screen { padding: 16px 20px 20px; }
+.budget-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: var(--surface); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 3px; }
+.budget-emoji { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; }
+.budget-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.budget-input { width: 85px; padding: 7px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-family: 'JetBrains Mono', monospace; text-align: right; outline: none; }
+.budget-input:focus { border-color: var(--accent); }
+.budget-del { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+.total-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--accent-bg); border-radius: 14px; border: 1px solid var(--accent); margin: 12px 0; }
+.total-bar span { font-size: 13px; color: var(--accent-text); font-weight: 500; }
+.total-bar strong { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--accent-text); }
+.add-cat-form { background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 14px; margin-bottom: 3px; }
+.add-cat-form h3 { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 12px; }
+.add-cat-row { display: flex; gap: 8px; align-items: center; }
+.add-cat-row input { flex: 1; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: 'Outfit', sans-serif; outline: none; }
+.add-cat-row input:focus { border-color: var(--accent); }
+.emoji-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.emoji-opt { font-size: 20px; cursor: pointer; padding: 4px 6px; border-radius: 8px; border: 1px solid transparent; transition: all 0.1s; }
+.emoji-opt.selected { background: var(--accent-bg); border-color: var(--accent); }
+.btn-add-cat { padding: 10px 16px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; font-family: 'Outfit', sans-serif; white-space: nowrap; }
+.btn-save { width: 100%; padding: 14px; background: var(--surface2); color: var(--text); font-size: 14px; font-weight: 500; border: 1px solid var(--border2); border-radius: 12px; cursor: pointer; font-family: 'Outfit', sans-serif; margin-top: 8px; }
+.budget-spacer { height: 100px; }
+
+/* CHART SCREEN */
+.chart-screen { padding: 16px 20px 100px; }
+.chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.chart-title { font-size: 11px; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* AI SCREEN */
+.ai-screen { padding: 16px 20px 100px; }
+.ai-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.ai-btn { width: 100%; padding: 14px; background: var(--accent-bg); color: var(--accent-text); font-size: 14px; font-weight: 600; border: 1px solid var(--accent); border-radius: 12px; cursor: pointer; font-family: 'Outfit', sans-serif; margin-bottom: 14px; }
+.ai-result { font-size: 14px; line-height: 1.75; color: var(--text2); white-space: pre-wrap; min-height: 100px; }
+.ai-loading { color: var(--text2); font-style: italic; }
+.salary-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 12px 14px; background: var(--accent-bg); border-radius: 12px; border: 1px solid var(--accent); }
+.salary-row label { font-size: 12px; color: var(--accent-text); font-weight: 500; flex: 1; }
+.salary-input { width: 110px; padding: 7px 10px; background: #fff; border: 1px solid var(--accent); border-radius: 8px; color: var(--text); font-size: 13px; font-family: 'JetBrains Mono', monospace; text-align: right; outline: none; }
+
+.toast { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: var(--bg); font-size: 13px; padding: 9px 18px; border-radius: 20px; opacity: 0; transition: all 0.2s; pointer-events: none; white-space: nowrap; z-index: 100; font-family: 'Outfit', sans-serif; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.cat-row, .gasto-item, .budget-row { animation: fadeUp 0.2s ease both; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen"></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showTab('home')" id="nav-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="nav-btn" onclick="showTab('add')" id="nav-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>Añadir</span>
+    </button>
+    <button class="nav-btn" onclick="showTab('budget')" id="nav-budget">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>Presupuesto</span>
+    </button>
+    <button class="nav-btn" onclick="showTab('charts')" id="nav-charts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Gráficos</span>
+    </button>
+    <button class="nav-btn" onclick="showTab('ai')" id="nav-ai">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a5 5 0 015 5c0 1.5-.6 2.8-1.6 3.8L21 17l-1.5 1.5-6.2-5.8c-.4.1-.9.2-1.3.2a5 5 0 110-10z"/></svg>
+      <span>IA</span>
+    </button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DEFAULT_CATS = [
+  {id:'ahorros',      name:'Ahorros',      icon:'🏦', color:'#8fc43a'},
+  {id:'suscripciones',name:'Suscripciones',icon:'📱', color:'#4ab8c4'},
+  {id:'piso',         name:'Piso',         icon:'🏠', color:'#c47a3a'},
+  {id:'salud',        name:'Salud',        icon:'💊', color:'#c43a7a'},
+  {id:'deporte',      name:'Deporte',      icon:'🏃', color:'#7a3ac4'},
+  {id:'comida',       name:'Comida',       icon:'🛒', color:'#3a8fc4'},
+  {id:'gasolina',     name:'Gasolina',     icon:'⛽', color:'#c4a83a'},
+  {id:'vida_social',  name:'Vida social',  icon:'🍻', color:'#3ac47a'},
+  {id:'gasto_libre',  name:'Gasto libre',  icon:'🎉', color:'#c43a3a'},
+];
+
+const DEFAULT_BUDGETS = {
+  ahorros:180, suscripciones:40, piso:540, salud:65,
+  deporte:50, comida:140, gasolina:100, vida_social:150, gasto_libre:40
+};
+
+const PALETTE_COLORS = ['#8fc43a','#4ab8c4','#c47a3a','#c43a7a','#7a3ac4','#3a8fc4','#c4c43a','#3ac47a','#c43a3a','#8f3ac4','#c48f3a','#3a4bc4'];
+const EMOJI_OPTS = ['🏠','🛒','🚗','⛽','💊','🏃','📱','🎬','✈️','🍻','🎉','📚','💼','🐶','🎮','💅','🏦','👗','🍕','☕'];
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let currentTab = 'home';
+let selectedCat = null;
+let selectedNewEmoji = '📦';
+let barChart = null, donutChart = null;
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('gastos-v2') || 'null'); } catch { return null; }
+}
+function saveState() { localStorage.setItem('gastos-v2', JSON.stringify(state)); }
+
+let saved = loadState();
+let state = saved || {
+  gastos: [],
+  cats: JSON.parse(JSON.stringify(DEFAULT_CATS)),
+  budgets: { ...DEFAULT_BUDGETS },
+  salary: 1305
+};
+if (!state.cats) state.cats = JSON.parse(JSON.stringify(DEFAULT_CATS));
+if (!state.salary) state.salary = 1305;
+selectedCat = state.cats[0]?.id || null;
+
+function nowMonth() { return new Date().toISOString().slice(0,7); }
+function fmt(n) { return (n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+function fmtS(n) { return (n||0).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0})+' €'; }
+
+function getSpent(month) {
+  const m = month || nowMonth();
+  const s = {};
+  state.cats.forEach(c => s[c.id] = 0);
+  state.gastos.filter(g => g.fecha.startsWith(m)).forEach(g => { if(s[g.cat]!==undefined) s[g.cat] = (s[g.cat]||0)+g.importe; else s[g.cat] = (s[g.cat]||0)+g.importe; });
+  return s;
+}
+function totalBudget() { return state.cats.reduce((a,c)=>a+(state.budgets[c.id]||0),0); }
+function totalSpent(m) { const s=getSpent(m); return Object.values(s).reduce((a,b)=>a+b,0); }
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+function showTab(tab) {
+  currentTab=tab;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+tab).classList.add('active');
+  renderScreen();
+}
+function renderScreen() {
+  const s=document.getElementById('screen');
+  if(currentTab==='home') s.innerHTML=renderHome();
+  else if(currentTab==='add') s.innerHTML=renderAdd();
+  else if(currentTab==='budget') s.innerHTML=renderBudget();
+  else if(currentTab==='charts'){s.innerHTML=renderCharts();drawCharts();}
+  else if(currentTab==='ai') s.innerHTML=renderAI();
+}
+
+function renderHome() {
+  const spent=getSpent(); const tb=totalBudget(); const ts=totalSpent(); const left=tb-ts;
+  const pct=tb>0?Math.min(100,ts/tb*100):0;
+  const progColor=pct>90?'var(--danger)':pct>75?'var(--warn)':'var(--accent)';
+  const leftClass=left<0?'chip-bad':pct>80?'chip-warn':'chip-good';
+  const d=new Date();
+  const [euros,cents]=ts.toFixed(2).split('.');
+
+  const catRows=state.cats.map((c,i)=>{
+    const s=spent[c.id]||0; const b=state.budgets[c.id]||0;
+    if(s===0&&b===0) return '';
+    const p=b>0?Math.min(100,s/b*100):0;
+    const col=p>90?'var(--danger)':p>75?'var(--warn)':c.color;
+    return `<div class="cat-row" style="animation-delay:${i*0.04}s">
+      <div class="cat-left">
+        <div class="cat-emoji">${c.icon}</div>
+        <div class="cat-info">
+          <div class="cat-name">${c.name}</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="width:${p.toFixed(1)}%;background:${col}"></div></div>
+        </div>
+      </div>
+      <div class="cat-right">
+        <div class="cat-spent">${fmtS(s)}</div>
+        <div class="cat-budget">/ ${fmtS(b)}</div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  const recents=[...state.gastos].filter(g=>g.fecha.startsWith(nowMonth())).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,10);
+  const recentHtml=recents.length===0?'<div class="empty-state">Sin gastos este mes — ¡añade el primero!</div>':
+    recents.map((g,i)=>{
+      const cat=state.cats.find(c=>c.id===g.cat)||{icon:'📦',color:'#aaa',name:g.cat};
+      const idx=state.gastos.indexOf(g);
+      return `<div class="gasto-item" style="animation-delay:${i*0.04}s">
+        <div class="gasto-icon" style="background:${cat.color}22">${cat.icon}</div>
+        <div class="gasto-info">
+          <div class="gasto-desc">${g.desc}</div>
+          <div class="gasto-meta">${cat.name} · ${g.fecha.slice(5).replace('-','/')}</div>
+        </div>
+        <div class="gasto-amount">${fmt(g.importe)}</div>
+        <button class="gasto-del" onclick="deleteGasto(${idx})">×</button>
+      </div>`;
+    }).join('');
+
+  return `
+    <div class="topbar">
+      <div class="topbar-row">
+        <h1>Mis Gastos</h1>
+        <span class="sub">${MONTHS[d.getMonth()]} ${d.getFullYear()}</span>
+      </div>
+    </div>
+    <div class="hero">
+      <div class="hero-label">Gastado este mes</div>
+      <div class="hero-amount">${euros.replace(/\B(?=(\d{3})+(?!\d))/g,'.')}<sup>,${cents} €</sup></div>
+      <div class="hero-chips">
+        <div class="chip ${leftClass}">${left>=0?'+':''}${fmtS(left)} libre</div>
+        <div class="chip chip-warn">${Math.round(pct)}% del presupuesto</div>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-track"><div class="prog-fill" style="width:${pct.toFixed(1)}%;background:${progColor}"></div></div>
+      <div class="prog-labels"><span>0 €</span><span>${fmtS(tb)}</span></div>
+    </div>
+    <div class="sec-header"><span class="sec-title">Por categoría</span></div>
+    <div class="cats">${catRows||'<div class="empty-state">Configura tu presupuesto</div>'}</div>
+    <div class="sec-header"><span class="sec-title">Últimos gastos</span></div>
+    <div class="recents">${recentHtml}</div>`;
+}
+
+function renderAdd() {
+  const today=new Date().toISOString().split('T')[0];
+  if(!selectedCat||!state.cats.find(c=>c.id===selectedCat)) selectedCat=state.cats[0]?.id;
+  const catBtns=state.cats.map(c=>`
+    <button class="cat-pick-btn ${selectedCat===c.id?'selected':''}" onclick="selectCat('${c.id}')">
+      <span class="picon">${c.icon}</span><span class="pname">${c.name}</span>
+    </button>`).join('');
+  return `
+    <div class="topbar"><div class="topbar-row"><h1>Añadir gasto</h1></div></div>
+    <div class="add-screen">
+      <div class="field">
+        <label>Descripción</label>
+        <input type="text" id="g-desc" placeholder="Ej: Mercadona, Spotify..." autocomplete="off">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Importe (€)</label>
+          <input type="number" id="g-importe" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="g-fecha" value="${today}">
+        </div>
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+        <div class="cat-picker">${catBtns}</div>
+      </div>
+      <button class="btn-primary" onclick="addGasto()">Añadir gasto</button>
+    </div>`;
+}
+
+function renderBudget() {
+  const tb=totalBudget();
+  const rows=state.cats.map((c,i)=>`
+    <div class="budget-row" style="animation-delay:${i*0.03}s">
+      <div class="budget-emoji">${c.icon}</div>
+      <div class="budget-name">${c.name}</div>
+      <input class="budget-input" type="number" id="b-${c.id}" value="${state.budgets[c.id]||0}" min="0" step="5" inputmode="numeric">
+      <button class="budget-del" onclick="deleteCat('${c.id}')" title="Eliminar categoría">×</button>
+    </div>`).join('');
+
+  const emojiOpts=EMOJI_OPTS.map(e=>`<span class="emoji-opt ${e===selectedNewEmoji?'selected':''}" onclick="selectEmoji('${e}')">${e}</span>`).join('');
+
+  return `
+    <div class="topbar"><div class="topbar-row"><h1>Presupuesto</h1><span class="sub">mensual</span></div></div>
+    <div class="budget-screen">
+      <div class="salary-row">
+        <label>💰 Salario base mensual</label>
+        <input class="salary-input" type="number" id="salary-input" value="${state.salary||1305}" min="0" step="50" inputmode="numeric">
+      </div>
+      <div class="total-bar">
+        <span>Total presupuestado</span>
+        <strong id="total-live">${fmtS(tb)}</strong>
+      </div>
+      ${rows}
+      <div class="add-cat-form" style="margin-top:12px">
+        <h3>+ Nueva categoría</h3>
+        <div class="emoji-row" id="emoji-row">${emojiOpts}</div>
+        <div class="add-cat-row">
+          <input type="text" id="new-cat-name" placeholder="Nombre categoría" maxlength="20">
+          <input type="number" id="new-cat-budget" placeholder="€" style="width:70px" min="0" inputmode="numeric">
+          <button class="btn-add-cat" onclick="addCat()">Añadir</button>
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveBudgets()">Guardar cambios ✓</button>
+      <div class="budget-spacer"></div>
+    </div>`;
+}
+
+function renderCharts() {
+  const legend=state.cats.map(c=>`<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div>${c.name}</div>`).join('');
+  return `
+    <div class="topbar"><div class="topbar-row"><h1>Análisis</h1></div></div>
+    <div class="chart-screen">
+      <div class="chart-wrap">
+        <div class="chart-title">Gasto vs presupuesto</div>
+        <div style="position:relative;height:240px"><canvas id="bar-chart" role="img" aria-label="Gasto vs presupuesto por categoría"></canvas></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Distribución del gasto</div>
+        <div style="position:relative;height:200px"><canvas id="donut-chart" role="img" aria-label="Distribución del gasto"></canvas></div>
+        <div class="legend">${legend}</div>
+      </div>
+    </div>`;
+}
+
+function renderAI() {
+  return `
+    <div class="topbar"><div class="topbar-row"><h1>Asesor IA</h1></div></div>
+    <div class="ai-screen">
+      <div class="ai-card">
+        <button class="ai-btn" onclick="runAI()">✦ Analizar mis finanzas este mes</button>
+        <div class="ai-result ai-loading" id="ai-box">Pulsa el botón para recibir un análisis personalizado con consejos concretos para mejorar tu patrimonio.</div>
+      </div>
+    </div>`;
+}
+
+function drawCharts() {
+  requestAnimationFrame(()=>{
+    const spent=getSpent();
+    const gridC='rgba(0,0,0,0.05)'; const labelC='#aaa';
+    const bc=document.getElementById('bar-chart');
+    if(bc){
+      if(barChart) barChart.destroy();
+      barChart=new Chart(bc,{
+        type:'bar',
+        data:{
+          labels:state.cats.map(c=>c.name.slice(0,7)),
+          datasets:[
+            {label:'Gastado',data:state.cats.map(c=>spent[c.id]||0),backgroundColor:state.cats.map(c=>c.color+'cc'),borderRadius:6,borderSkipped:false},
+            {label:'Presupuesto',data:state.cats.map(c=>state.budgets[c.id]||0),backgroundColor:'transparent',borderColor:state.cats.map(c=>c.color+'66'),borderWidth:1.5,borderRadius:6,borderSkipped:false}
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw)}}},
+          scales:{
+            x:{grid:{color:gridC},ticks:{color:labelC,font:{size:10},autoSkip:false,maxRotation:35}},
+            y:{grid:{color:gridC},ticks:{color:labelC,font:{size:10},callback:v=>v+'€'}}
+          }
+        }
+      });
+    }
+    const dc=document.getElementById('donut-chart');
+    if(dc){
+      if(donutChart) donutChart.destroy();
+      const data=state.cats.map(c=>spent[c.id]||0);
+      const total=data.reduce((a,b)=>a+b,0);
+      if(total===0){dc.parentElement.innerHTML='<div class="empty-state">Sin gastos este mes</div>';return;}
+      donutChart=new Chart(dc,{
+        type:'doughnut',
+        data:{labels:state.cats.map(c=>c.name),datasets:[{data,backgroundColor:state.cats.map(c=>c.color+'dd'),borderWidth:0,hoverOffset:4}]},
+        options:{
+          responsive:true,maintainAspectRatio:false,cutout:'68%',
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmt(ctx.raw)+' ('+Math.round(ctx.raw/total*100)+'%)'}}}
+        }
+      });
+    }
+  });
+}
+
+function selectCat(id) {
+  selectedCat=id; renderScreen();
+}
+
+function selectEmoji(e) {
+  selectedNewEmoji=e;
+  document.querySelectorAll('.emoji-opt').forEach(el=>{
+    el.classList.toggle('selected',el.textContent===e);
+  });
+}
+
+function addGasto() {
+  const desc=document.getElementById('g-desc')?.value.trim();
+  const importe=parseFloat(document.getElementById('g-importe')?.value);
+  const fecha=document.getElementById('g-fecha')?.value;
+  if(!desc||!importe||importe<=0||!fecha){toast('Completa todos los campos');return;}
+  if(!selectedCat){toast('Selecciona una categoría');return;}
+  state.gastos.push({desc,importe,cat:selectedCat,fecha});
+  saveState(); toast('Gasto añadido ✓'); showTab('home');
+}
+
+function deleteGasto(idx) {
+  if(confirm('¿Eliminar este gasto?')){
+    state.gastos.splice(idx,1); saveState(); renderScreen();
+  }
+}
+
+function addCat() {
+  const name=document.getElementById('new-cat-name')?.value.trim();
+  const budget=parseFloat(document.getElementById('new-cat-budget')?.value)||0;
+  if(!name){toast('Escribe el nombre');return;}
+  const id='cat_'+Date.now();
+  const color=PALETTE_COLORS[state.cats.length % PALETTE_COLORS.length];
+  state.cats.push({id,name,icon:selectedNewEmoji,color});
+  state.budgets[id]=budget;
+  saveState(); toast(`Categoría "${name}" añadida ✓`); renderScreen();
+}
+
+function deleteCat(id) {
+  const cat=state.cats.find(c=>c.id===id);
+  if(!cat) return;
+  if(!confirm(`¿Eliminar la categoría "${cat.name}"? Los gastos asociados se quedarán sin categoría.`)) return;
+  state.cats=state.cats.filter(c=>c.id!==id);
+  delete state.budgets[id];
+  if(selectedCat===id) selectedCat=state.cats[0]?.id||null;
+  saveState(); toast('Categoría eliminada'); renderScreen();
+}
+
+function saveBudgets() {
+  state.cats.forEach(c=>{
+    const v=parseFloat(document.getElementById('b-'+c.id)?.value)||0;
+    state.budgets[c.id]=v;
+  });
+  const sal=parseFloat(document.getElementById('salary-input')?.value)||1305;
+  state.salary=sal;
+  saveState(); toast('Cambios guardados ✓');
+  const tb=totalBudget();
+  const el=document.getElementById('total-live');
+  if(el) el.textContent=fmtS(tb);
+}
+
+async function runAI() {
+  const box=document.getElementById('ai-box');
+  box.className='ai-result ai-loading'; box.textContent='Analizando tus finanzas…';
+  const spent=getSpent(); const tb=totalBudget(); const ts=totalSpent();
+  const lines=state.cats.map(c=>`- ${c.name}: ${(spent[c.id]||0).toFixed(2)}€ gastado de ${state.budgets[c.id]||0}€`).join('\n');
+  const recientes=[...state.gastos].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,20).map(g=>`${g.fecha}: ${g.desc} ${g.importe}€ (${g.cat})`).join('\n');
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`Eres un asesor financiero personal. Analiza estos datos y da consejos concretos en español, en texto plano sin asteriscos ni markdown.
+
+Salario base mensual: ${state.salary}€
+Presupuesto total: ${tb.toFixed(2)}€
+Total gastado este mes: ${ts.toFixed(2)}€
+Restante: ${(tb-ts).toFixed(2)}€
+
+Por categoría:\n${lines}
+
+Últimos gastos:\n${recientes||'Sin gastos registrados.'}
+
+Contexto: el usuario tiene un salario base de ${state.salary}€. Si gana dinero extra va directo al ahorro.
+
+Responde en 3 secciones breves sin títulos con asteriscos:
+1. Diagnóstico del mes (2-3 frases con números)
+2. Qué mejorar (2-3 puntos concretos con cifras)
+3. Consejo para hacer crecer su patrimonio a largo plazo (1-2 frases prácticas)`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.find(b=>b.type==='text')?.text||'No se pudo obtener el análisis.';
+    box.className='ai-result'; box.textContent=text;
+  } catch {
+    box.className='ai-result'; box.textContent='Error al conectar. Comprueba tu conexión e inténtalo de nuevo.';
+  }
+}
+
+if('serviceWorker' in navigator){
+  const sw=`const C='g-v2';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['.']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('.')))))`;
+  const blob=new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+
+renderScreen();
+</script>
+</body>
+</html>
